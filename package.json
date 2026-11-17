@@ -1,0 +1,39 @@
+{
+  "name": "noodle-masters",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SUPPLY MASTERS — wholesale distribution management.",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/lib/auth/access.test.ts src/lib/auth/access-restricted.contract.test.ts src/lib/auth/session.dedupe.test.ts src/lib/auth/roles.test.ts src/lib/auth/permission-alignment.migration.test.ts src/lib/auth/validation.test.ts src/lib/utils/is-authorization-error.test.ts src/lib/utils/id.test.ts src/lib/admin/users/authorization.test.ts src/lib/admin/users/password.test.ts src/lib/admin/users/provisioning.phase-d.test.ts src/lib/navigation/app-nav.test.ts src/lib/navigation/pagination.test.ts src/lib/master-data/authorization.test.ts src/lib/master-data/categories/schemas.test.ts src/lib/master-data/categories/migration.contract.test.ts src/lib/master-data/drivers/schemas.test.ts src/lib/deliveries/authorization.test.ts src/lib/deliveries/assignment-permissions.phase-a.test.ts src/lib/deliveries/dispatch.phase-b.test.ts src/lib/deliveries/assignment-audit.phase-c.test.ts src/lib/deliveries/transitions.test.ts src/lib/deliveries/schemas.test.ts src/lib/payments/authorization.test.ts src/lib/payments/schemas.test.ts src/lib/payments/presentation.test.ts src/lib/payments/summaries.test.ts src/lib/payments/integrity.test.ts src/lib/returns/authorization.test.ts src/lib/returns/schemas.test.ts src/lib/returns/presentation.test.ts src/lib/returns/db-errors.test.ts src/lib/returns/integrity.test.ts src/lib/returns/idempotency.migration.test.ts src/lib/purchasing/money.test.ts src/lib/purchasing/schemas.test.ts src/lib/purchasing/idempotency.migration.test.ts src/lib/security/phase-d.hardening.contract.test.ts src/lib/inventory/authorization.test.ts src/lib/inventory/schemas.test.ts src/lib/inventory/presentation.test.ts src/lib/inventory/integrity.test.ts src/lib/inventory/idempotency.migration.test.ts src/lib/inventory/summary-rpc-types.test.ts src/lib/inventory/summary.migration.contract.test.ts src/lib/supplies/authorization.test.ts src/lib/supplies/schemas.test.ts src/lib/supplies/idempotency.migration.test.ts src/lib/supplies/integrity.test.ts src/lib/reports/authorization.test.ts src/lib/reports/schemas.test.ts src/lib/reports/presentation.test.ts src/lib/reports/summaries.test.ts src/lib/reports/queries.migration.contract.test.ts src/lib/reports/rpc-types.test.ts src/lib/reports/dashboard.migration.contract.test.ts src/lib/reports/dashboard-rpc-types.test.ts src/lib/reports/dashboard-metrics.test.ts src/lib/reports/dashboard-presentation.test.ts src/lib/reports/part-2c-hardening.contract.test.ts src/lib/products/options.contract.test.ts src/lib/query-optimization.j7.contract.test.ts src/lib/final-qa.batch1.contract.test.ts src/lib/audit-logs/sanitize.test.ts src/lib/audit-logs/presentation.test.ts src/lib/audit-logs/schemas.test.ts src/config/env.test.ts src/config/product-options.test.ts src/components/ui/loading.test.ts src/components/ui/interaction.test.ts src/components/navigation/create-success.test.ts src/components/app/shell-responsive.test.ts src/components/ui/listing-responsive.test.ts src/components/ui/forms-responsive.test.ts src/components/ui/dashboard-reports-responsive.test.ts src/components/ui/part5-responsive-audit.test.ts src/components/brand/brand-lockup.test.ts src/components/welcome.test.ts scripts/lib/first-admin-bootstrap/run.test.ts scripts/lib/first-admin-bootstrap/env.test.ts",
+    "bootstrap:first-admin": "tsx scripts/bootstrap-first-admin.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.0",
+    "lucide-react": "^1.69.0",
+    "next": "16.4.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.5",
+    "tailwindcss": "^4",
+    "tsx": "^4.20.5",
+    "typescript": "^5"
+  }
+}
