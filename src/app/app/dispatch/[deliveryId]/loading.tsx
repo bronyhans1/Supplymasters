@@ -1,4 +1,4 @@
-export default function DispatchAssignmentLoading() {
+export default function DispatchDetailLoading() {
   return (
     <section className="mx-auto w-full max-w-5xl space-y-6" aria-busy="true">
       <div className="space-y-2">
@@ -8,8 +8,7 @@ export default function DispatchAssignmentLoading() {
       </div>
       <div className="h-40 animate-pulse rounded-xl border border-line bg-surface/80" />
       <div className="h-48 animate-pulse rounded-xl border border-line bg-surface/80" />
-      <div className="h-48 animate-pulse rounded-xl border border-line bg-surface/80" />
-      <span className="sr-only">Loading assignment desk…</span>
+      <span className="sr-only">Loading dispatch desk…</span>
     </section>
   );
 }

@@ -15,7 +15,7 @@ export default function DispatchLoading() {
       </div>
       <div className="h-40 animate-pulse rounded-xl border border-line bg-surface/80" />
       <div className="h-64 animate-pulse rounded-xl border border-line bg-surface/80" />
-      <span className="sr-only">Loading dispatch workspace…</span>
+      <span className="sr-only">Loading dispatch queue…</span>
     </section>
   );
 }

@@ -33,17 +33,19 @@ function profile(overrides: Partial<Profile> = {}): Profile {
   };
 }
 
-describe("Phase B — Dispatch & Assignments workspace", () => {
+describe("Phase B — separated Dispatch and Assignments workspaces", () => {
   const nav = read("src/lib/navigation/app-nav.ts");
   const sidebar = read("src/components/app/AppSidebar.tsx");
   const dispatchPage = read("src/app/app/dispatch/page.tsx");
-  const assignPage = read("src/app/app/dispatch/[deliveryId]/page.tsx");
+  const dispatchDetail = read("src/app/app/dispatch/[deliveryId]/page.tsx");
+  const assignmentsPage = read("src/app/app/assignments/page.tsx");
+  const assignPage = read("src/app/app/assignments/[deliveryId]/page.tsx");
   const deliveriesPage = read("src/app/app/deliveries/page.tsx");
   const actions = read("src/lib/deliveries/actions.ts");
   const queries = read("src/lib/deliveries/queries.ts");
   const schemas = read("src/lib/deliveries/schemas.ts");
 
-  it("gates dispatch route and nav to ADMIN assignment permission", () => {
+  it("gates dispatch and assignments routes to ADMIN assignment permission", () => {
     assert.equal(ROLE_PERMISSIONS.ADMIN.manageDeliveryAssignments, true);
     assert.equal(ROLE_PERMISSIONS.STAFF.manageDeliveryAssignments, false);
     assert.equal(ROLE_PERMISSIONS.DRIVER.manageDeliveryAssignments, false);
@@ -54,27 +56,42 @@ describe("Phase B — Dispatch & Assignments workspace", () => {
     assert.match(nav, /canAccessDispatchNav/);
     assert.match(nav, /manageDeliveryAssignments/);
     assert.match(nav, /href: "\/app\/dispatch"/);
-    assert.match(nav, /Dispatch & Assignments/);
+    assert.match(nav, /href: "\/app\/assignments"/);
+    assert.match(nav, /label: "Dispatch"/);
+    assert.match(nav, /label: "Assignments"/);
+    assert.doesNotMatch(nav, /Dispatch & Assignments/);
     assert.match(sidebar, /dispatch:\s*Route/);
+    assert.match(sidebar, /assignments:\s*UserCog/);
 
     assert.match(dispatchPage, /await requireAdmin\(\)/);
+    assert.match(dispatchDetail, /await requireAdmin\(\)/);
+    assert.match(assignmentsPage, /await requireAdmin\(\)/);
     assert.match(assignPage, /await requireAdmin\(\)/);
     assert.match(dispatchPage, /listDispatchDeliveries/);
+    assert.match(assignmentsPage, /listAssignmentDeliveries/);
     assert.doesNotMatch(dispatchPage, /requireStaffOrAdmin/);
+    assert.doesNotMatch(assignmentsPage, /requireStaffOrAdmin/);
   });
 
-  it("keeps assignment forms only on ADMIN Dispatch desk, not delivery detail", () => {
+  it("keeps assignment forms on Assignments desk and dispatch confirm on Dispatch", () => {
     const detailPage = read("src/app/app/deliveries/[deliveryId]/page.tsx");
     assert.match(assignPage, /AssignStaffForm/);
     assert.match(assignPage, /AssignDriverForm/);
     assert.match(assignPage, /await requireAdmin\(\)/);
     assert.match(assignPage, /Status stays[\s\S]*unchanged|stay the same|never change/i);
     assert.doesNotMatch(detailPage, /AssignStaffForm|AssignDriverForm/);
+    assert.doesNotMatch(detailPage, /from Dispatch/);
+    assert.match(detailPage, /\/app\/assignments\/\$\{delivery\.id\}/);
+    assert.doesNotMatch(dispatchDetail, /AssignStaffForm|AssignDriverForm/);
+    assert.match(dispatchDetail, /ConfirmDispatchForm/);
     assert.match(detailPage, /Responsible staff/);
     assert.match(detailPage, /Assigned driver/);
     assert.match(detailPage, /UpdateStatusForm/);
+    assert.match(detailPage, /excludeToStatuses=\{\["DISPATCHED"\]\}/);
     assert.match(actions, /revalidatePath\("\/app\/dispatch"\)/);
     assert.match(actions, /revalidatePath\(`\/app\/dispatch\/\$\{delivery\.id\}`\)/);
+    assert.match(actions, /revalidatePath\("\/app\/assignments"\)/);
+    assert.match(actions, /revalidatePath\(`\/app\/assignments\/\$\{delivery\.id\}`\)/);
 
     const driverAction = actions.match(
       /export async function assignDeliveryDriver\([\s\S]*?\n\}/,
@@ -127,10 +144,10 @@ describe("Phase B — Dispatch & Assignments workspace", () => {
     );
 
     assert.match(
-      dispatchPage,
+      assignmentsPage,
       /Multiple deliveries may share the same[\s\S]*staff member or driver/,
     );
-    assert.doesNotMatch(dispatchPage, /conflict|overlap|one-delivery/i);
+    assert.doesNotMatch(assignmentsPage, /conflict|overlap|one-delivery/i);
     assert.doesNotMatch(assignPage, /conflict|overlap/i);
   });
 
@@ -148,15 +165,25 @@ describe("Phase B — Dispatch & Assignments workspace", () => {
     assert.doesNotMatch(deliveriesPage, /listEligibleStaffForAssignment/);
   });
 
-  it("ships responsive dispatch listing and loading shells", () => {
+  it("ships responsive dispatch and assignments listing shells", () => {
     assert.match(dispatchPage, /MobileRecordList/);
     assert.match(dispatchPage, /DesktopTableShell/);
     assert.match(dispatchPage, /RecordCard/);
     assert.match(dispatchPage, /ListActionLink/);
     assert.match(dispatchPage, /xl:grid-cols-4/);
-    assert.match(read("src/app/app/dispatch/loading.tsx"), /Loading dispatch workspace/);
+    assert.match(assignmentsPage, /MobileRecordList/);
+    assert.match(assignmentsPage, /DesktopTableShell/);
+    assert.match(read("src/app/app/dispatch/loading.tsx"), /Loading dispatch queue/);
     assert.match(
       read("src/app/app/dispatch/[deliveryId]/loading.tsx"),
+      /Loading dispatch desk/,
+    );
+    assert.match(
+      read("src/app/app/assignments/loading.tsx"),
+      /Loading assignments workspace/,
+    );
+    assert.match(
+      read("src/app/app/assignments/[deliveryId]/loading.tsx"),
       /Loading assignment desk/,
     );
   });

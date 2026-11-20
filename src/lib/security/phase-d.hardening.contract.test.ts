@@ -93,7 +93,7 @@ describe("Phase D — approved hardening remediations", () => {
     assert.doesNotMatch(purBehavioral, /COMMIT;/);
   });
 
-  it("D-PAY-1 revokes authenticated EXECUTE on record_full_payment", () => {
+  it("D-PAY-1 historically revoked authenticated EXECUTE on record_full_payment", () => {
     assert.match(
       bizMigration,
       /REVOKE ALL ON FUNCTION public\.record_full_payment[\s\S]*FROM authenticated/,
@@ -107,6 +107,15 @@ describe("Phase D — approved hardening remediations", () => {
     assert.match(bizVerify, /create_supply_payment_path/);
     assert.match(paymentsIntegrity, /record_full_payment/);
     assert.match(suppliesIntegrity, /create_supply_transaction/);
+
+    // Later operational workflow restores authenticated EXECUTE (unapplied until approved).
+    const restoreMigration = read(
+      "supabase/migrations/20261119000100_supply_pending_payment_decouple.sql",
+    );
+    assert.match(
+      restoreMigration,
+      /GRANT EXECUTE ON FUNCTION public\.record_full_payment[\s\S]*TO authenticated/,
+    );
   });
 
   it("D-PROV-1 adds USER_PROVISIONED audit and recovery action without password leakage", () => {

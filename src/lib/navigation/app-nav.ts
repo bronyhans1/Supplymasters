@@ -146,6 +146,24 @@ export function buildAppNav(role: AppRole): NavSection[] {
         href: "/app/supplies",
         available: true,
       },
+    );
+    if (canAccessDispatchNav(role)) {
+      operations.push(
+        {
+          id: "dispatch",
+          label: "Dispatch",
+          href: "/app/dispatch",
+          available: true,
+        },
+        {
+          id: "assignments",
+          label: "Assignments",
+          href: "/app/assignments",
+          available: true,
+        },
+      );
+    }
+    operations.push(
       {
         id: "payments",
         label: "Payments",
@@ -158,21 +176,13 @@ export function buildAppNav(role: AppRole): NavSection[] {
         href: "/app/deliveries",
         available: true,
       },
-    );
-    if (canAccessDispatchNav(role)) {
-      operations.push({
-        id: "dispatch",
-        label: "Dispatch & Assignments",
-        href: "/app/dispatch",
+      {
+        id: "returns",
+        label: "Returns",
+        href: "/app/returns",
         available: true,
-      });
-    }
-    operations.push({
-      id: "returns",
-      label: "Returns",
-      href: "/app/returns",
-      available: true,
-    });
+      },
+    );
   }
 
   const management: NavItem[] = [];

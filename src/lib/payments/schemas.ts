@@ -36,3 +36,29 @@ export const listPaymentsQuerySchema = z.object({
 });
 
 export type ListPaymentsQuery = z.infer<typeof listPaymentsQuerySchema>;
+
+const paymentMethodSchema = z.enum(PAYMENT_METHODS);
+
+export const recordFullPaymentSchema = z.object({
+  supplyId: z.uuid("Select a valid supply."),
+  paymentMethod: paymentMethodSchema,
+  paymentDate: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid payment date.")
+    .optional(),
+  transactionReference: z
+    .string()
+    .trim()
+    .max(120, "Payment reference is too long.")
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : null)),
+  notes: z
+    .string()
+    .trim()
+    .max(2000, "Notes are too long.")
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : null)),
+});
+
+export type RecordFullPaymentInput = z.infer<typeof recordFullPaymentSchema>;

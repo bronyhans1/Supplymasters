@@ -41,7 +41,7 @@ describe("Phase C — delivery assignment audit enrichment", () => {
   const assignmentHistory = read(
     "src/components/deliveries/AssignmentHistory.tsx",
   );
-  const dispatchDetail = read("src/app/app/dispatch/[deliveryId]/page.tsx");
+  const dispatchDetail = read("src/app/app/assignments/[deliveryId]/page.tsx");
 
   const driverFn = extractFunctionBody(migration, "set_delivery_driver");
   const staffFn = extractFunctionBody(

@@ -41,11 +41,11 @@ function failure(error: unknown): SupplyActionResult {
 }
 
 /**
- * Create a fully paid supply via create_supply_transaction.
- * Never writes inventory, stock_movements, payments, or supplies from app code.
- * clientRequestId makes retries/concurrent submits idempotent at the database.
+ * Create a supply with pending (UNPAID) payment obligation.
+ * Stock is deducted; a deliveries row starts PENDING.
+ * Payment is recorded later via record_full_payment — never here.
  */
-export async function createPaidSupply(
+export async function createSupply(
   input: unknown,
 ): Promise<SupplyActionResult> {
   try {
@@ -64,8 +64,6 @@ export async function createPaidSupply(
       p_vendor_id: parsed.vendorId,
       p_supply_date: parsed.supplyDate,
       p_items: itemsPayload,
-      p_payment_method: parsed.paymentMethod,
-      p_transaction_reference: parsed.transactionReference,
       p_notes: parsed.notes,
     });
 
@@ -79,13 +77,18 @@ export async function createPaidSupply(
     revalidatePath("/app/inventory");
     revalidatePath("/app/payments");
     revalidatePath("/app/deliveries");
+    revalidatePath("/app/dispatch");
+    revalidatePath("/app/assignments");
 
     return {
       ok: true,
       data: supply,
-      message: `Supply ${supply.supply_ref} recorded as paid. Stock has been deducted.`,
+      message: `Supply ${supply.supply_ref} created. Payment is pending. Stock has been deducted.`,
     };
   } catch (error) {
     return failure(error);
   }
 }
+
+/** @deprecated Prefer createSupply. Alias kept for Deploy package compatibility. */
+export const createPaidSupply = createSupply;

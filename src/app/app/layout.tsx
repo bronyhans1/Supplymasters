@@ -7,13 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Server-side gate + application shell for all /app routes.
  * Enforces authenticated + active + password-change-complete using DB profile.
- *
- * Always render per-request. Auth helpers may return early when public Supabase
- * env is absent (e.g. local build without .env), which skips cookies() and would
- * otherwise allow Next to statically prerender and throw UNAUTHENTICATED.
  */
-export const dynamic = "force-dynamic";
-
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getCurrentProfile();
   const gate = evaluateAppAccess(profile);

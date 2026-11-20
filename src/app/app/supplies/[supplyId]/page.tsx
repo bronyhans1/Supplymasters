@@ -193,6 +193,20 @@ export default async function SupplyDetailPage({ params }: { params: Params }) {
               value={supply.payment.transaction_reference ?? "—"}
             />
           </dl>
+        ) : supply.payment_status === "UNPAID" ? (
+          <div className="mt-3 space-y-3">
+            <p className="text-sm text-muted">
+              Payment is pending ({formatGhs(Number(supply.grand_total))} due).
+              Record it separately in Payments — independent of dispatch and
+              delivery.
+            </p>
+            <Link
+              href={`/app/payments/record/${supply.id}`}
+              className="inline-flex text-sm font-medium text-accent underline-offset-2 hover:underline print:hidden"
+            >
+              Record payment
+            </Link>
+          </div>
         ) : (
           <p className="mt-3 text-sm text-muted">No payment record found.</p>
         )}

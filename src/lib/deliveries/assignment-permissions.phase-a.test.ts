@@ -118,11 +118,13 @@ describe("Phase A — ADMIN-only delivery assignment permissions", () => {
     assert.match(filterLoader, /await requireStaffOrAdmin\(\)/);
   });
 
-  it("keeps delivery detail read-only for assignments; mutations live in Dispatch", () => {
+  it("keeps delivery detail read-only for assignments; edits live in Assignments", () => {
     assert.doesNotMatch(detailPage, /AssignDriverForm/);
     assert.doesNotMatch(detailPage, /AssignStaffForm/);
     assert.doesNotMatch(detailPage, /canManageDeliveryAssignments/);
     assert.doesNotMatch(detailPage, /showDriverAssign|showStaffAssign/);
+    assert.doesNotMatch(detailPage, /from Dispatch/);
+    assert.match(detailPage, /\/app\/assignments\/\$\{delivery\.id\}/);
     assert.match(detailPage, /Responsible staff/);
     assert.match(detailPage, /Assigned driver/);
     assert.match(detailPage, /UpdateStatusForm/);

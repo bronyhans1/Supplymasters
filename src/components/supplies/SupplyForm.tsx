@@ -20,11 +20,8 @@ import { LoadingButton } from "@/components/ui/LoadingButton";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { VendorOption } from "@/lib/partners/options";
 import type { ProductOption } from "@/lib/products/options";
-import { createPaidSupply } from "@/lib/supplies/actions";
+import { createSupply } from "@/lib/supplies/actions";
 import { formatGhs, lineTotal, sumLineTotals } from "@/lib/supplies/money";
-import { PAYMENT_METHODS } from "@/lib/supplies/schemas";
-import { paymentMethodLabel } from "@/lib/supplies/presentation";
-import type { PaymentMethod } from "@/types/database";
 import { cn } from "@/lib/utils/cn";
 import { createUuid } from "@/lib/utils/id";
 
@@ -60,8 +57,6 @@ export function SupplyForm({
   );
   const vendorId = selectedVendor?.id ?? "";
   const [supplyDate, setSupplyDate] = useState(todayIsoDate);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
-  const [transactionReference, setTransactionReference] = useState("");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<LineDraft[]>([]);
   /** Options discovered via typeahead — keeps stock/details for selected lines only. */
@@ -176,11 +171,7 @@ export function SupplyForm({
       return;
     }
     if (computed.grandTotal <= 0) {
-      setError("Supply total must be greater than zero for full payment.");
-      return;
-    }
-    if (!paymentMethod) {
-      setError("Select a payment method.");
+      setError("Supply total must be greater than zero.");
       return;
     }
     setError(null);
@@ -193,12 +184,10 @@ export function SupplyForm({
       setConfirmError(null);
       setError(null);
       try {
-        const result = await createPaidSupply({
+        const result = await createSupply({
           clientRequestId,
           vendorId,
           supplyDate,
-          paymentMethod,
-          transactionReference,
           notes,
           items: lines.map((line) => ({
             productId: line.productId,
@@ -495,42 +484,11 @@ export function SupplyForm({
 
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="space-y-4 rounded-xl border border-line bg-surface/90 p-5">
-          <h2 className="font-display text-xl text-ink">Full payment</h2>
+          <h2 className="font-display text-xl text-ink">Notes</h2>
           <p className="text-sm text-muted">
-            Partial payments are not supported. The recorded amount equals the
-            supply total.
+            Payment is not collected here. After confirmation, the supply appears
+            in Payments as pending until full payment is recorded separately.
           </p>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted">
-              Payment method
-            </span>
-            <select
-              value={paymentMethod}
-              onChange={(event) =>
-                setPaymentMethod(event.target.value as PaymentMethod)
-              }
-              className={formControlClass}
-              disabled={pending}
-            >
-              {PAYMENT_METHODS.map((method) => (
-                <option key={method} value={method}>
-                  {paymentMethodLabel(method)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted">
-              Payment reference
-            </span>
-            <input
-              value={transactionReference}
-              onChange={(event) => setTransactionReference(event.target.value)}
-              placeholder="Optional receipt or transfer reference"
-              className={formControlClass}
-              disabled={pending}
-            />
-          </label>
           <label className="block space-y-1.5">
             <span className="text-xs font-medium uppercase tracking-wide text-muted">
               Notes
@@ -563,16 +521,14 @@ export function SupplyForm({
               <dd className="font-medium text-ink">{computed.totalQuantity}</dd>
             </div>
             <div className="flex justify-between gap-3 border-t border-line pt-2">
-              <dt className="text-muted">Supply total</dt>
+              <dt className="text-muted">Amount due</dt>
               <dd className="font-semibold text-ink">
                 {formatGhs(computed.grandTotal)}
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-muted">Full payment amount</dt>
-              <dd className="font-semibold text-good">
-                {formatGhs(computed.grandTotal)}
-              </dd>
+              <dt className="text-muted">Payment status</dt>
+              <dd className="font-semibold text-ink">Pending</dd>
             </div>
           </dl>
         </div>
@@ -594,11 +550,11 @@ export function SupplyForm({
         open={confirmOpen}
         pending={pending}
         variant="warning"
-        title="Confirm paid supply"
+        title="Confirm supply"
         description={
           <div className="space-y-2">
             <p>
-              Record supply for{" "}
+              Create supply for{" "}
               <span className="font-medium text-ink">
                 {selectedVendor?.business_name ?? "vendor"}
               </span>{" "}
@@ -609,15 +565,13 @@ export function SupplyForm({
               .
             </p>
             <p>
-              Full payment via{" "}
-              <span className="font-medium text-ink">
-                {paymentMethodLabel(paymentMethod)}
-              </span>{" "}
-              will be recorded and stock will be deducted immediately.
+              Stock will be deducted immediately. Payment stays pending until
+              recorded separately in Payments. Dispatch and delivery remain
+              independent.
             </p>
             <p className="text-xs">
-              Retries reuse the same request id and will not double-apply stock or
-              payment if this submission already succeeded.
+              Retries reuse the same request id and will not double-apply stock if
+              this submission already succeeded.
             </p>
           </div>
         }

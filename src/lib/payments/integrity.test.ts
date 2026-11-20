@@ -22,16 +22,23 @@ function listFilesRecursive(dir: string): string[] {
   return files;
 }
 
-describe("payments read-only integrity", () => {
-  it("does not introduce a payments actions module", () => {
-    assert.equal(existsSync(path.join(root, "src/lib/payments/actions.ts")), false);
+describe("payments recording integrity", () => {
+  it("records payments only through record_full_payment RPC", () => {
+    assert.equal(existsSync(path.join(root, "src/lib/payments/actions.ts")), true);
+    const actions = readSrc("src/lib/payments/actions.ts");
+    assert.match(actions, /rpc\(\s*["']record_full_payment["']/);
+    assert.doesNotMatch(actions, /\.from\(\s*["']payments["']\s*\)\s*\.insert/);
+    assert.doesNotMatch(actions, /\.from\(\s*["']payments["']\s*\)\s*\.update/);
+    assert.doesNotMatch(actions, /\.from\(\s*["']supplies["']\s*\)\s*\.update/);
   });
 
-  it("keeps payments module free of create/update/delete mutations", () => {
-    const paymentsDir = path.join(root, "src/lib/payments");
+  it("keeps payment UI free of direct payments table mutations", () => {
     const componentDir = path.join(root, "src/components/payments");
     const pageDir = path.join(root, "src/app/app/payments");
-    const sources = [...listFilesRecursive(paymentsDir), ...listFilesRecursive(componentDir), ...listFilesRecursive(pageDir)]
+    const sources = [
+      ...listFilesRecursive(componentDir),
+      ...listFilesRecursive(pageDir),
+    ]
       .filter((file) => file.endsWith(".ts") || file.endsWith(".tsx"))
       .filter((file) => !file.endsWith(".test.ts"));
 
@@ -42,14 +49,14 @@ describe("payments read-only integrity", () => {
       assert.doesNotMatch(source, /\.from\(\s*["']payments["']\s*\)\s*\.insert/);
       assert.doesNotMatch(source, /\.from\(\s*["']payments["']\s*\)\s*\.update/);
       assert.doesNotMatch(source, /\.from\(\s*["']payments["']\s*\)\s*\.delete/);
-      assert.doesNotMatch(source, /rpc\(\s*["']record_full_payment["']/);
       assert.doesNotMatch(source, /rpc\(\s*["']create_supply_transaction["']/);
     }
   });
 
-  it("preserves supply payment creation through create_supply_transaction only", () => {
+  it("keeps supply creation free of payment recording", () => {
     const actions = readSrc("src/lib/supplies/actions.ts");
     assert.match(actions, /rpc\(\s*["']create_supply_transaction["']/);
+    assert.doesNotMatch(actions, /rpc\(\s*["']record_full_payment["']/);
     assert.doesNotMatch(actions, /\.from\(\s*["']payments["']\s*\)\s*\.insert/);
   });
 });

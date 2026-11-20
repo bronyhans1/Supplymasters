@@ -1,18 +1,7 @@
 import { z } from "zod";
-import type { PaymentMethod } from "@/types/database";
 import { lineTotal, parseMoneyInput, roundMoney, sumLineTotals } from "./money";
 
 const uuid = z.uuid("Select a valid record.");
-
-export const PAYMENT_METHODS = [
-  "CASH",
-  "MOBILE_MONEY",
-  "BANK_TRANSFER",
-  "CHEQUE",
-  "OTHER",
-] as const satisfies readonly PaymentMethod[];
-
-const paymentMethodSchema = z.enum(PAYMENT_METHODS);
 
 const supplyItemSchema = z
   .object({
@@ -55,13 +44,6 @@ export const createSupplySchema = z
       .string()
       .trim()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid supply date."),
-    paymentMethod: paymentMethodSchema,
-    transactionReference: z
-      .string()
-      .trim()
-      .max(120, "Payment reference is too long.")
-      .optional()
-      .transform((value) => (value && value.length > 0 ? value : null)),
     notes: z
       .string()
       .trim()
@@ -100,7 +82,7 @@ export const createSupplySchema = z
     if (value.computedTotal <= 0) {
       ctx.addIssue({
         code: "custom",
-        message: "Supply total must be greater than zero for full payment.",
+        message: "Supply total must be greater than zero.",
         path: ["items"],
       });
     }
@@ -130,3 +112,6 @@ export const listSuppliesQuerySchema = z.object({
 
 export type CreateSupplyInput = z.infer<typeof createSupplySchema>;
 export type ListSuppliesQuery = z.infer<typeof listSuppliesQuerySchema>;
+
+/** Re-export for payment recording forms (no longer part of supply create). */
+export { PAYMENT_METHODS } from "@/lib/payments/schemas";

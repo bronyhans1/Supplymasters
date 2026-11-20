@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { listPaymentsQuerySchema, PAYMENT_METHODS } from "@/lib/payments/schemas";
+import {
+  listPaymentsQuerySchema,
+  PAYMENT_METHODS,
+  recordFullPaymentSchema,
+} from "@/lib/payments/schemas";
 
 describe("listPaymentsQuerySchema", () => {
   it("applies defaults for empty query", () => {
@@ -48,5 +52,39 @@ describe("listPaymentsQuerySchema", () => {
     });
     assert.equal(parsed.q, "NM-PAY-000001");
     assert.equal(parsed.vendorId, "vendor-1");
+  });
+});
+
+describe("recordFullPaymentSchema", () => {
+  const supplyId = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
+
+  it("accepts a full payment payload", () => {
+    const parsed = recordFullPaymentSchema.parse({
+      supplyId,
+      paymentMethod: "CASH",
+      paymentDate: "2026-11-19",
+      transactionReference: "RCPT-9",
+      notes: "Collected",
+    });
+    assert.equal(parsed.supplyId, supplyId);
+    assert.equal(parsed.paymentMethod, "CASH");
+    assert.equal(parsed.transactionReference, "RCPT-9");
+  });
+
+  it("rejects invalid supply id and unknown methods", () => {
+    assert.equal(
+      recordFullPaymentSchema.safeParse({
+        supplyId: "not-a-uuid",
+        paymentMethod: "CASH",
+      }).success,
+      false,
+    );
+    assert.equal(
+      recordFullPaymentSchema.safeParse({
+        supplyId,
+        paymentMethod: "CRYPTO",
+      }).success,
+      false,
+    );
   });
 });

@@ -34,7 +34,7 @@ export function mapSupplyCreateError(
     return new AppError(
       400,
       "PAYMENT_METHOD_REQUIRED",
-      "Select a payment method for full payment.",
+      "Select a payment method.",
     );
   }
 
@@ -74,7 +74,7 @@ export function mapSupplyCreateError(
     return new AppError(
       400,
       "ZERO_TOTAL",
-      "Supply total must be greater than zero for full payment.",
+      "Supply total must be greater than zero.",
     );
   }
 
@@ -101,6 +101,6 @@ export function mapSupplyCreateError(
   return new AppError(
     400,
     "SUPPLY_CREATE_FAILED",
-    "The supply could not be completed. No stock or payment changes were applied.",
+    "The supply could not be completed. No stock changes were applied.",
   );
 }

@@ -49,6 +49,8 @@ function revalidateDeliveryPaths(delivery: DeliveryRow) {
   revalidatePath(`/app/deliveries/${delivery.id}`);
   revalidatePath("/app/dispatch");
   revalidatePath(`/app/dispatch/${delivery.id}`);
+  revalidatePath("/app/assignments");
+  revalidatePath(`/app/assignments/${delivery.id}`);
   revalidatePath(`/app/supplies/${delivery.supply_id}`);
   revalidatePath("/app/supplies");
 }

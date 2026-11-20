@@ -49,7 +49,8 @@ describe("supply create idempotency migration contract", () => {
     assert.match(form, /REQUEST_CONFLICT|Uncertain|uncertain/);
     assert.doesNotMatch(form, /crypto\.randomUUID/);
     assert.match(actions, /p_client_request_id: parsed\.clientRequestId/);
-    assert.match(actions, /p_payment_method: parsed\.paymentMethod/);
+    assert.doesNotMatch(actions, /p_payment_method/);
+    assert.doesNotMatch(form, /paymentMethod|Payment method/);
   });
 
   it("ships a PostgreSQL integration test for replay, payload conflicts, and stock safety", () => {

@@ -22,7 +22,8 @@ export function paymentStatusLabel(status: PaymentStatus): string {
     case "PAID":
       return "Paid";
     case "UNPAID":
-      return "Unpaid";
+      // UNPAID = pending payment obligation (no payments row yet).
+      return "Pending";
     default:
       return status;
   }

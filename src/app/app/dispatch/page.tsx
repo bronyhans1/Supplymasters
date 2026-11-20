@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import { PageHeader } from "@/components/app/PageHeader";
-import { AssignmentStateBadge } from "@/components/deliveries/AssignmentStateBadge";
 import { DeliveryStatusBadge } from "@/components/deliveries/DeliveryStatusBadge";
-import { DispatchFilters } from "@/components/deliveries/DispatchFilters";
+import { DispatchQueueFilters } from "@/components/deliveries/DispatchQueueFilters";
 import { ListPager } from "@/components/ui/ListPager";
 import {
   DesktopTableShell,
@@ -15,11 +14,7 @@ import {
   formatDeliveryDate,
   formatDeliveryDateTime,
 } from "@/lib/deliveries/presentation";
-import {
-  listDispatchDeliveries,
-  listDriversForFilter,
-  listEligibleStaffForAssignment,
-} from "@/lib/deliveries/queries";
+import { listDispatchDeliveries } from "@/lib/deliveries/queries";
 import { buildPageHref } from "@/lib/navigation/pagination";
 import { AppError } from "@/lib/utils/errors";
 
@@ -34,14 +29,8 @@ export default async function DispatchPage({
   const params = await searchParams;
 
   let list;
-  let staffOptions;
-  let driverOptions;
   try {
-    [list, staffOptions, driverOptions] = await Promise.all([
-      listDispatchDeliveries(params),
-      listEligibleStaffForAssignment(),
-      listDriversForFilter(),
-    ]);
+    list = await listDispatchDeliveries(params);
   } catch (error) {
     return (
       <div role="alert" className="text-sm text-accent">
@@ -53,50 +42,38 @@ export default async function DispatchPage({
   const totalPages = Math.max(1, Math.ceil(list.total / list.pageSize));
   const hasActiveFilters = Boolean(
     list.query.q ||
-      list.query.status ||
+      (list.query.status && list.query.status !== "PENDING") ||
       list.query.fromDate ||
-      list.query.toDate ||
-      list.query.staffId ||
-      list.query.driverId ||
-      list.query.assignmentState,
+      list.query.toDate,
   );
-  const needsDriver = list.deliveries.filter(
-    (delivery) =>
-      !delivery.driver_id &&
-      (delivery.status === "PENDING" || delivery.status === "DISPATCHED"),
-  ).length;
+  const awaitingDispatch = list.summary.pending;
+  const dispatched = list.summary.dispatched;
 
   return (
     <section className="mx-auto w-full max-w-6xl space-y-6">
       <PageHeader
-        title="Dispatch & Assignments"
-        description="Assign responsible staff and optional operational drivers. Assignment changes never change delivery status."
+        title="Dispatch"
+        description="Confirm when goods leave for the vendor. Dispatch does not mark deliveries as delivered or record payment."
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="Matching total" value={list.total} />
-        <SummaryCard label="Pending" value={list.summary.pending} />
-        <SummaryCard label="Dispatched" value={list.summary.dispatched} />
-        <SummaryCard label="Needs driver (this page)" value={needsDriver} />
+        <SummaryCard label="Awaiting dispatch" value={awaitingDispatch} />
+        <SummaryCard label="Dispatched" value={dispatched} />
+        <SummaryCard label="Delivered" value={list.summary.delivered} />
       </div>
       <p className="text-xs text-muted">
-        Summary pending/dispatched counts use the current search, date, staff, driver,
-        and assignment filters. Status filter applies to the table. Responsible staff is
-        always required; drivers remain optional. Multiple deliveries may share the same
-        staff member or driver.
+        Default view shows deliveries awaiting dispatch (Pending). Use filters to
+        review dispatch history. Assignments and delivery confirmation remain
+        separate.
       </p>
 
       <Suspense fallback={<p className="text-sm text-muted">Loading filters…</p>}>
-        <DispatchFilters
+        <DispatchQueueFilters
           initialQ={list.query.q}
           initialStatus={list.query.status}
           initialFromDate={list.query.fromDate}
           initialToDate={list.query.toDate}
-          initialStaffId={list.query.staffId}
-          initialDriverId={list.query.driverId}
-          initialAssignmentState={list.query.assignmentState}
-          staffOptions={staffOptions}
-          driverOptions={driverOptions}
         />
       </Suspense>
 
@@ -104,7 +81,7 @@ export default async function DispatchPage({
         <div className="rounded-xl border border-dashed border-line px-6 py-12 text-center text-sm text-muted">
           {hasActiveFilters
             ? "No deliveries match these dispatch filters."
-            : "No deliveries to assign yet."}
+            : "No deliveries awaiting dispatch."}
         </div>
       ) : (
         <>
@@ -128,19 +105,8 @@ export default async function DispatchPage({
                     value: delivery.responsible_staff?.full_name ?? "—",
                   },
                   {
-                    label: "Driver",
-                    value: delivery.driver
-                      ? `${delivery.driver.driver_code} · ${delivery.driver.full_name}`
-                      : "Unassigned",
-                  },
-                  {
-                    label: "Assignment",
-                    value: (
-                      <AssignmentStateBadge
-                        status={delivery.status}
-                        driverId={delivery.driver_id}
-                      />
-                    ),
+                    label: "Dispatched",
+                    value: formatDeliveryDateTime(delivery.dispatched_at),
                   },
                   {
                     label: "Date",
@@ -149,7 +115,7 @@ export default async function DispatchPage({
                 ]}
                 action={
                   <ListActionLink href={`/app/dispatch/${delivery.id}`}>
-                    Assign
+                    {delivery.status === "PENDING" ? "Dispatch" : "View"}
                   </ListActionLink>
                 }
               />
@@ -165,8 +131,7 @@ export default async function DispatchPage({
                   <th className="px-4 py-3 font-medium">Location</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Staff</th>
-                  <th className="px-4 py-3 font-medium">Driver</th>
-                  <th className="px-4 py-3 font-medium">Assignment</th>
+                  <th className="px-4 py-3 font-medium">Dispatched</th>
                   <th className="px-4 py-3 font-medium">Date</th>
                   <th className="px-4 py-3 font-medium">Actions</th>
                 </tr>
@@ -190,28 +155,17 @@ export default async function DispatchPage({
                       {delivery.responsible_staff?.full_name ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-muted">
-                      {delivery.driver
-                        ? `${delivery.driver.driver_code} · ${delivery.driver.full_name}`
-                        : "Unassigned"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <AssignmentStateBadge
-                        status={delivery.status}
-                        driverId={delivery.driver_id}
-                      />
+                      {formatDeliveryDateTime(delivery.dispatched_at)}
                     </td>
                     <td className="px-4 py-3 text-muted">
-                      <div>{formatDeliveryDate(delivery.delivery_date)}</div>
-                      <div className="text-xs">
-                        {formatDeliveryDateTime(delivery.updated_at)}
-                      </div>
+                      {formatDeliveryDate(delivery.delivery_date)}
                     </td>
                     <td className="px-4 py-3">
                       <ListActionLink
                         href={`/app/dispatch/${delivery.id}`}
                         variant="table"
                       >
-                        Assign
+                        {delivery.status === "PENDING" ? "Dispatch" : "View"}
                       </ListActionLink>
                     </td>
                   </tr>

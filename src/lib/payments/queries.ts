@@ -520,3 +520,153 @@ export async function listVendorsForPaymentFilter(): Promise<PaymentVendorOption
 
   return (data ?? []) as PaymentVendorOption[];
 }
+
+export type PendingPaymentObligation = {
+  id: string;
+  supply_ref: string;
+  supply_date: string;
+  grand_total: number;
+  payment_status: Database["public"]["Enums"]["payment_status"];
+  vendor: PaymentVendorSummary | null;
+};
+
+export type ListPendingObligationsResult = {
+  obligations: PendingPaymentObligation[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+const PENDING_PAGE_SIZE = 20;
+
+/**
+ * Unpaid supplies = pending payment obligations (no payments row yet).
+ */
+export async function listPendingPaymentObligations(
+  rawQuery: Partial<Record<string, string | string[] | undefined>> = {},
+): Promise<ListPendingObligationsResult> {
+  await requireStaffOrAdmin();
+
+  const pageRaw = typeof rawQuery.pendingPage === "string" ? rawQuery.pendingPage : "1";
+  const page = Math.max(1, Number.parseInt(pageRaw, 10) || 1);
+  const from = (page - 1) * PENDING_PAGE_SIZE;
+  const to = from + PENDING_PAGE_SIZE - 1;
+
+  const supabase = await createClient();
+  const { data, error, count } = await supabase
+    .from("supplies")
+    .select(
+      `
+      id,
+      supply_ref,
+      supply_date,
+      grand_total,
+      payment_status,
+      vendor:vendors (
+        id,
+        vendor_code,
+        business_name,
+        contact_person,
+        phone,
+        location
+      )
+    `,
+      { count: "exact" },
+    )
+    .eq("payment_status", "UNPAID")
+    .order("supply_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw new AppError(
+      500,
+      "PENDING_PAYMENT_LIST_FAILED",
+      "Unable to load pending payments.",
+    );
+  }
+
+  const obligations = (data ?? []).map((row) => {
+    const vendor = asSingle(
+      row.vendor as PaymentVendorSummary | PaymentVendorSummary[] | null,
+    );
+    return {
+      id: row.id,
+      supply_ref: row.supply_ref,
+      supply_date: row.supply_date,
+      grand_total: Number(row.grand_total),
+      payment_status: row.payment_status,
+      vendor,
+    } satisfies PendingPaymentObligation;
+  });
+
+  return {
+    obligations,
+    total: count ?? 0,
+    page,
+    pageSize: PENDING_PAGE_SIZE,
+  };
+}
+
+export type UnpaidSupplyForPayment = {
+  id: string;
+  supply_ref: string;
+  supply_date: string;
+  grand_total: number;
+  payment_status: Database["public"]["Enums"]["payment_status"];
+  vendor: PaymentVendorSummary | null;
+};
+
+export async function getUnpaidSupplyForPayment(
+  supplyId: string,
+): Promise<UnpaidSupplyForPayment> {
+  await requireStaffOrAdmin();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("supplies")
+    .select(
+      `
+      id,
+      supply_ref,
+      supply_date,
+      grand_total,
+      payment_status,
+      vendor:vendors (
+        id,
+        vendor_code,
+        business_name,
+        contact_person,
+        phone,
+        location
+      )
+    `,
+    )
+    .eq("id", supplyId)
+    .maybeSingle();
+
+  if (error) {
+    throw new AppError(500, "SUPPLY_LOOKUP_FAILED", "Unable to load that supply.");
+  }
+  if (!data) {
+    throw new AppError(404, "SUPPLY_NOT_FOUND", "Supply not found.");
+  }
+  if (data.payment_status !== "UNPAID") {
+    throw new AppError(
+      409,
+      "PAYMENT_ALREADY_RECORDED",
+      "This supply is already fully paid.",
+    );
+  }
+
+  return {
+    id: data.id,
+    supply_ref: data.supply_ref,
+    supply_date: data.supply_date,
+    grand_total: Number(data.grand_total),
+    payment_status: data.payment_status,
+    vendor: asSingle(
+      data.vendor as PaymentVendorSummary | PaymentVendorSummary[] | null,
+    ),
+  };
+}

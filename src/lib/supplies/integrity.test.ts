@@ -11,10 +11,11 @@ function readSrc(relativePath: string): string {
 }
 
 describe("supplies integrity safeguards", () => {
-  it("creates paid supplies only through create_supply_transaction RPC", () => {
+  it("creates unpaid supplies only through create_supply_transaction RPC", () => {
     const actions = readSrc("src/lib/supplies/actions.ts");
     assert.match(actions, /rpc\(\s*["']create_supply_transaction["']/);
-    assert.doesNotMatch(actions, /record_full_payment/);
+    assert.doesNotMatch(actions, /rpc\(\s*["']record_full_payment["']/);
+    assert.doesNotMatch(actions, /p_payment_method/);
     assert.doesNotMatch(actions, /\.from\(\s*["']inventory["']\s*\)\s*\.update/);
     assert.doesNotMatch(actions, /\.from\(\s*["']stock_movements["']\s*\)\s*\.insert/);
     assert.doesNotMatch(actions, /\.from\(\s*["']payments["']\s*\)\s*\.insert/);

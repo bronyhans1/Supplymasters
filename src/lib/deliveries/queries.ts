@@ -278,6 +278,7 @@ const LIST_SELECT = `
   vendor_location,
   delivery_date,
   status,
+  dispatched_at,
   updated_at,
   created_at,
   supply:supplies (
@@ -723,7 +724,27 @@ async function loadEligibleStaffOptions(options?: {
 }
 
 /** ADMIN dispatch workspace list — same filters as deliveries, stricter gate. */
+/**
+ * ADMIN dispatch queue. Defaults to PENDING (awaiting dispatch) when no status
+ * filter is provided so the desk focuses on work to dispatch.
+ * Use status=ALL to list every status.
+ */
 export async function listDispatchDeliveries(
+  rawQuery: Partial<Record<string, string | string[] | undefined>> = {},
+): Promise<ListDeliveriesResult> {
+  await requireAdmin();
+  const rawStatus =
+    typeof rawQuery.status === "string" ? rawQuery.status.trim() : "";
+  const status =
+    rawStatus === "ALL" ? "" : rawStatus.length > 0 ? rawStatus : "PENDING";
+  return listDeliveries({
+    ...rawQuery,
+    status,
+  });
+}
+
+/** ADMIN assignment queue — full delivery list with assignment filters. */
+export async function listAssignmentDeliveries(
   rawQuery: Partial<Record<string, string | string[] | undefined>> = {},
 ): Promise<ListDeliveriesResult> {
   await requireAdmin();

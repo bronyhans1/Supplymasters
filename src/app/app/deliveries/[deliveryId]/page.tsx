@@ -277,15 +277,25 @@ export default async function DeliveryDetailPage({ params }: { params: Params })
         )}
       </section>
 
-      <UpdateStatusForm deliveryId={delivery.id} currentStatus={delivery.status} />
+      <UpdateStatusForm
+        deliveryId={delivery.id}
+        currentStatus={delivery.status}
+        excludeToStatuses={["DISPATCHED"]}
+      />
 
       {isAdmin ? (
         <section className="space-y-3">
           <div>
             <h2 className="font-display text-xl text-ink">Assignment history</h2>
             <p className="mt-1 text-sm text-muted">
-              Read-only record of driver and responsible staff changes. Edit
-              assignments from Dispatch.
+              Read-only record of driver and responsible staff changes.{" "}
+              <Link
+                href={`/app/assignments/${delivery.id}`}
+                className="font-medium text-accent underline-offset-2 hover:underline"
+              >
+                Edit in Assignments
+              </Link>
+              .
             </p>
           </div>
           <AssignmentHistory events={assignmentHistory} />

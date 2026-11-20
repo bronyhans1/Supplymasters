@@ -10,13 +10,11 @@ const productB = "66666666-7777-4888-8999-aaaaaaaaaaaa";
 const clientRequestId = "99999999-aaaa-4bbb-8ccc-dddddddddddd";
 
 describe("createSupplySchema", () => {
-  it("accepts a valid paid supply and computes totals server-side", () => {
+  it("accepts a valid unpaid supply and computes totals server-side", () => {
     const result = createSupplySchema.safeParse({
       clientRequestId,
       vendorId,
       supplyDate: "2026-11-08",
-      paymentMethod: "CASH",
-      transactionReference: "RCPT-1",
       notes: "",
       items: [
         { productId: productA, quantity: 2, unitPrice: "12.50" },
@@ -31,15 +29,15 @@ describe("createSupplySchema", () => {
       ]));
       assert.equal(result.data.totalQuantity, 3);
       assert.equal(result.data.items[0]?.lineTotal, lineTotal(2, 12.5));
+      assert.equal("paymentMethod" in result.data, false);
     }
   });
 
-  it("requires request id, payment method, positive quantities, and unique products", () => {
+  it("requires request id, positive quantities, and unique products", () => {
     assert.equal(
       createSupplySchema.safeParse({
         vendorId,
         supplyDate: "2026-11-08",
-        paymentMethod: "CASH",
         items: [{ productId: productA, quantity: 1, unitPrice: "1.00" }],
       }).success,
       false,
@@ -50,7 +48,6 @@ describe("createSupplySchema", () => {
         clientRequestId,
         vendorId,
         supplyDate: "2026-11-08",
-        paymentMethod: "CASH",
         items: [{ productId: productA, quantity: 0, unitPrice: "1.00" }],
       }).success,
       false,
@@ -61,7 +58,6 @@ describe("createSupplySchema", () => {
         clientRequestId,
         vendorId,
         supplyDate: "2026-11-08",
-        paymentMethod: "CASH",
         items: [
           { productId: productA, quantity: 1, unitPrice: "1.00" },
           { productId: productA, quantity: 2, unitPrice: "2.00" },
@@ -71,15 +67,30 @@ describe("createSupplySchema", () => {
     );
   });
 
-  it("rejects zero total supplies because full payment requires a positive amount", () => {
+  it("rejects zero total supplies", () => {
+    const result = createSupplySchema.safeParse({
+      clientRequestId,
+      vendorId,
+      supplyDate: "2026-11-08",
+      items: [{ productId: productA, quantity: 1, unitPrice: "0.00" }],
+    });
+    assert.equal(result.success, false);
+  });
+
+  it("ignores legacy payment fields during supply create", () => {
     const result = createSupplySchema.safeParse({
       clientRequestId,
       vendorId,
       supplyDate: "2026-11-08",
       paymentMethod: "CASH",
-      items: [{ productId: productA, quantity: 1, unitPrice: "0.00" }],
+      transactionReference: "RCPT-1",
+      items: [{ productId: productA, quantity: 1, unitPrice: "10.00" }],
     });
-    assert.equal(result.success, false);
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal("paymentMethod" in result.data, false);
+      assert.equal("transactionReference" in result.data, false);
+    }
   });
 });
 

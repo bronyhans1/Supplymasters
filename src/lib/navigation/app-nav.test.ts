@@ -56,7 +56,12 @@ describe("buildAppNav", () => {
     const dispatch = items.find((i) => i.id === "dispatch");
     assert.equal(dispatch?.href, "/app/dispatch");
     assert.equal(dispatch?.available, true);
-    assert.equal(dispatch?.label, "Dispatch & Assignments");
+    assert.equal(dispatch?.label, "Dispatch");
+
+    const assignments = items.find((i) => i.id === "assignments");
+    assert.equal(assignments?.href, "/app/assignments");
+    assert.equal(assignments?.available, true);
+    assert.equal(assignments?.label, "Assignments");
 
     const payments = items.find((i) => i.id === "payments");
     assert.equal(payments?.href, "/app/payments");
@@ -69,6 +74,19 @@ describe("buildAppNav", () => {
     const reports = items.find((i) => i.id === "reports");
     assert.equal(reports?.href, "/app/reports");
     assert.equal(reports?.available, true);
+
+    const operations = sections.find((s) => s.id === "operations");
+    const opLabels = (operations?.items ?? []).map((i) => i.label);
+    const supplyIdx = opLabels.indexOf("Supplies");
+    const dispatchIdx = opLabels.indexOf("Dispatch");
+    const assignmentsIdx = opLabels.indexOf("Assignments");
+    const paymentsIdx = opLabels.indexOf("Payments");
+    const deliveriesIdx = opLabels.indexOf("Deliveries");
+    assert.ok(supplyIdx < dispatchIdx);
+    assert.ok(dispatchIdx < assignmentsIdx);
+    assert.ok(assignmentsIdx < paymentsIdx);
+    assert.ok(paymentsIdx < deliveriesIdx);
+    assert.equal(labels.includes("Dispatch & Assignments"), false);
   });
 
   it("hides ADMIN-only modules from staff while keeping operational routes", () => {
@@ -82,6 +100,8 @@ describe("buildAppNav", () => {
     assert.ok(labels.includes("Payments"));
     assert.ok(labels.includes("Deliveries"));
     assert.ok(labels.includes("Returns"));
+    assert.equal(labels.includes("Dispatch"), false);
+    assert.equal(labels.includes("Assignments"), false);
     assert.equal(labels.includes("Dispatch & Assignments"), false);
     assert.equal(labels.includes("User Management"), false);
     assert.equal(labels.includes("Product Categories"), false);
@@ -124,6 +144,10 @@ describe("buildAppNav", () => {
     );
     assert.equal(
       items.some((i) => i.id === "dispatch"),
+      false,
+    );
+    assert.equal(
+      items.some((i) => i.id === "assignments"),
       false,
     );
     assert.equal(

@@ -18,9 +18,12 @@ import { useToast } from "@/components/ui/ToastProvider";
 export function UpdateStatusForm({
   deliveryId,
   currentStatus,
+  excludeToStatuses = [],
 }: {
   deliveryId: string;
   currentStatus: DeliveryStatus;
+  /** Hide transitions handled in other operational sections (e.g. Dispatch). */
+  excludeToStatuses?: readonly OperationalDeliveryStatus[];
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -31,7 +34,9 @@ export function UpdateStatusForm({
     null,
   );
 
-  const nextStatuses = allowedNextStatuses(currentStatus);
+  const nextStatuses = allowedNextStatuses(currentStatus).filter(
+    (status) => !excludeToStatuses.includes(status),
+  );
 
   if (nextStatuses.length === 0) {
     return (

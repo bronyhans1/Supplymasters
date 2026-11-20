@@ -21,10 +21,12 @@ describe("J7 query optimization contracts", () => {
     assert.equal(FILTER_SEARCH_LIMIT, 25);
   });
 
-  it("A: dispatch assignment uses slim getter without history or supply items", () => {
-    const page = read("src/app/app/dispatch/[deliveryId]/page.tsx");
+  it("A: assignment desk uses slim getter without history or supply items", () => {
+    const page = read("src/app/app/assignments/[deliveryId]/page.tsx");
+    const dispatchDetail = read("src/app/app/dispatch/[deliveryId]/page.tsx");
     const queries = read("src/lib/deliveries/queries.ts");
     assert.match(page, /getDeliveryForAssignment/);
+    assert.match(dispatchDetail, /getDeliveryForAssignment/);
     assert.doesNotMatch(page, /getDelivery\(/);
     assert.match(queries, /export async function getDeliveryForAssignment/);
     assert.match(queries, /export async function getDelivery\(/);

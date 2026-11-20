@@ -21,6 +21,7 @@ const LISTING_PAGES = [
   "app/app/inventory/page.tsx",
   "app/app/deliveries/page.tsx",
   "app/app/dispatch/page.tsx",
+  "app/app/assignments/page.tsx",
   "app/app/payments/page.tsx",
   "app/app/admin/users/page.tsx",
 ] as const;

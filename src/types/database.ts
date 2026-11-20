@@ -662,8 +662,6 @@ export type Database = {
           p_vendor_id: string;
           p_supply_date: string;
           p_items: Json;
-          p_payment_method: PaymentMethod;
-          p_transaction_reference?: string | null;
           p_notes?: string | null;
         };
         Returns: Database["public"]["Tables"]["supplies"]["Row"];

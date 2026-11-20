@@ -283,6 +283,7 @@ describe("role-aware navigation Part 2B", () => {
     assert.match(sidebar, /categories:\s*Tags/);
     assert.match(sidebar, /"audit-logs":\s*History/);
     assert.match(sidebar, /dispatch:\s*Route/);
+    assert.match(sidebar, /assignments:\s*UserCog/);
     assert.match(sidebar, /buildAppNav\(profile\.role\)/);
   });
 });
